@@ -1,0 +1,44 @@
+{
+    "http://tzxm.hbzwfw.gov.cn/sbglweb/gsxxList": {
+        "province": "hebei",
+        "method": "post",
+        "params": {
+            "xzqh": 130000,
+            "rows": 50,
+            "page": 194
+        },
+        "list": {
+            "_items": "table.tbstyle1 tbody tr[*]",
+            "code": "td:title",
+            "name": "td[1]:title",
+            "url_": "a:href",
+            "spsx": "td[2]:title",
+            "spbm": "td[3]:title",
+            "spjg": "td[4]::",
+            "sprq": "td[5]::"
+        },
+        "detail": {
+            "code": "table.tc_nr3 tr td[1]::",
+            "name": "table.tc_nr3 tr td[3]::",
+            "xmlb": "table.tc_nr3 tr[1] td[1]::",
+            "frdw": "table.tc_nr3 tr[1] td[3]::",
+            "gsxx": {
+                "_items": "table[1].tc_nr3 tr[1:]",
+                "spbm": "td::",
+                "spsx": "td[1]::",
+                "spjg": "td[2]::",
+                "sprq": "td[3]::",
+                "spwh": "td[4]::"
+            },
+            "bljg": {
+                "_items": "table[2].tc_nr3 tr[1:]",
+                "spbm": "td::",
+                "spsx": "td[1]::",
+                "spjg": "td[2]::",
+                "sprq": "td[3]::",
+                "spwh": "td[4]::"
+            }
+            
+        }
+    }
+}
