@@ -41,48 +41,37 @@ class Hebei(metaclass=BaseSpiderMeta):
         a, b = re.findall(pattern, fake_url)
         return url_template % (a, b, config['xzqh'])
 
-    def package(self, ld, dd):
-        ip = InvestProject()
-        ip['ip_code'] = dd.get('code', ld.get('code'))
-        ip['ip_name'] = dd.get('name', ld.get('name'))
-        ip['ip_construction'] = dd.get('frdw')
-        ip['ip_projtype'] = dd.get('xmlb')
-        ip['ip_province'] = self.province
-        ip['ip_city'] = self.city
-        ip['ip_status'] = ld.get('spjg')
-        ip['ip_date'] = ld.get('sprq')
-        ip['ip_createuser'] = 'sjj'
-        ip['ip_createtime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        ip['ip_url'] = ld.get('url_')
-        ip['ip_updatetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        ip['ip_oragan'] = ld.get('spbm')
+    
 
-        ias = []
-        for xx in dd['gsxx']+dd['bljg']:
-            ia = InvestApprove()
-            ia['ip_code'] = ip['ip_code']
-            ia['ia_dept'] = xx.get('spbm', ip['ip_oragan'])
-            ia['ia_item'] = xx.get('spsx')
-            ia['ia_status'] = xx.get('spjg', ip['ip_status'])
-            ia['ia_date'] = xx.get('sprq', ip['ip_date'])
-            ia['ia_permissionnum'] = xx.get('spwh')
-            ia['ia_code'] = md5_16(ia['ip_code']+(ia['ia_dept'] or '') + \
-                (ia['ia_item'] or '') + (ia['ia_status'] or '') + (ia['ia_date'] or '')\
-                    + (ia['ia_permissionnum'] or '') + '')
-            ias.append(ia)
+
+class Shahnghaai(metaclass=BaseSpiderMeta):
+    search_worlds_used = [
+        '新能源',
+        '半导体',
+        '人工智能',
+        '智能汽车',
+        '光伏项目',
+        '房项目',
+        '有限公司',
+        '发项目',       # yanfa, kaifa
+        '改造项目',
+    ]
+
+    search_words = [
+        '机械制造',
+        '高科技',
+        '交通设施',
+        '大数据',
         
-        if not self.city:
-            depart = ip['ip_oragan']
-            if not depart and ias:
-                depart = ias[0]['ia_dept']
-            ip['ip_city'] = area.guess_city(depart, self.province_zh)
-            if not ip['ip_city']:
-                ip['ip_city'] = area.guess_city(ip['ip_construction'], self.province_zh)
-            if not ip['ip_city']:
-                ip['ip_city'] = area.guess_city(ip['ip_name'], self.province_zh) or ''
-
-        return ip, *ias
-
+        '改造项目',
+        '扩建项目',
+        
+        '建设项目'
+    ]
+    def build_detail_url(self, fake_url, config):
+        pattern = r"'([^']+)'"
+        id_ = re.findall(pattern, fake_url)[0]
+        return "http://222.66.64.156:8082/xxgs/proInfoDetail.jsp?SHID=%s" % id_
 
 class XProvince(metaclass=BaseSpiderMeta):
     pass

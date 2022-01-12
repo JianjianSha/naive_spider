@@ -5,7 +5,7 @@
         "params": {
             "xzqh": 130000,
             "rows": 50,
-            "page": 194
+            "page": 1
         },
         "list": {
             "_items": "table.tbstyle1 tbody tr[*]",
@@ -39,6 +39,45 @@
                 "spwh": "td[4]::"
             }
             
+        }
+    },
+
+    "http://222.66.64.156:8082/xxgs/XXGS.jsp": {
+        "yzm_url": "http://222.66.64.156:8082/xxgs/CheckCodeImg2.jsp",
+        "yzm_enabled": 0,
+        "province": "shahnghaai",
+        "method": "post",
+        "page_key": "page_index",
+        "headers": {
+            "Cookie": "JSESSIONID=06A6BC110EFAA5E5C7441DF937DF2D27"
+        },
+        "params": {
+            "pro_name": "%B8%C4%D4%EC%CF%EE%C4%BF",
+            "pro_code": "",
+            "qryYZM": "",
+            "page_index": 1,
+            "nPageSize": 12
+        },
+        "list": {
+            "_items": "div.box >div[1] table tr[1:]",
+            "code": "td div::",
+            "name": "td[1] a::",
+            "url_": "td[1] a:onclick",
+            "spsx": "td[2] div::",
+            "spbm": "td[3] div::",
+            "spjg": "td[4] div::",
+            "sprq": "td[5] div::"
+        },
+        "detail": {
+            "code": "div.box table tr[1] td[3]::",
+            "name": "div.box table tr[1] td[1]::",
+            "gsxx": {
+                "_items": "div.box table[1] tr[2:]",
+                "spbm": "td::",
+                "spsx": "td[1]::",
+                "spjg": "td[2]::",
+                "sprq": "td[3]::"
+            }
         }
     }
 }

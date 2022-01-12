@@ -7,6 +7,7 @@ from scrapy.http import headers
 from scrapy_splash.request import SplashFormRequest
 from .imports import *
 
+
 class BaseSpider(scrapy.Spider):
     def __init__(self, city=None):
         '''
@@ -29,21 +30,26 @@ class BaseSpider(scrapy.Spider):
         ds_config = DataSources().get(area_s)
         self.request = PageListRequest(config=ds_config)
 
+
     @property
     def province(self):
-        if self.province_zh[-1] != '省':
+        if self.province_zh[-1] != '省' and self.province_zh not in MUNICIPALITIES:
             return self.province_zh + '省'
         return self.province_zh
     
     @property
     def city(self):
+        if self.province_zh in MUNICIPALITIES:
+            city = self.province_zh
+            if city[-1] != '市':
+                city += '市'
         return self.city_zh
          
     def start_requests(self):
         yield self.request.request()
 
     def parse(self, response):
-        request = response.meta['r']
+        req = response.meta['r']
         try:
             text = response.body.decode(chardet.detect(response.body)['encoding'])
         except:
@@ -51,24 +57,41 @@ class BaseSpider(scrapy.Spider):
 
         soup = BeautifulSoup(text, 'lxml')
 
-        if isinstance(request, PageDetailRequest):
-            data = self.isomorphic_extract_data(soup, request.config)
-            for item in self.package(request.data, data):
+        if isinstance(req, PageDetailRequest):
+            data = self.isomorphic_extract_data(soup, req.config)
+            for item in self.package(req.data, data):
                 yield item
         else:
-            green_print('=> get response from url:', response.url)
-            datas = self.isomorphic_extract_data(soup, request.config['list'], request.config['params'])
-            for data in datas:
-                dr = PageDetailRequest(data, request.config['detail'])
-                time.sleep(REQUEST_SPAN)
-                yield dr.request()
+            
+            if req.counter == 0:
+                r = request.Request(req.config['yzm_url'], headers=req.headers)
+                resp = request.urlopen(r, timeout=30)
+                img = resp.read()
+                img = base64.b64encode(img)
+                d = urlparse.urlencode({'img': img}).encode('utf-8')
+                r = request.Request("http://0.0.0.0:1234/sh", data=d)
+                resp = request.urlopen(r, timeout=30)
+                img_code = resp.read().decode('utf-8', errors='ignore')
+                print("captcha:", img_code)
+                req.set_captcha(img_code)
+            else:
+                if req.config.get('yzm_url'):
+                    req.reset_captcha()
+                green_print('=> get response from url:', response.url)
+                # self.dump_page(text)
+                datas = self.isomorphic_extract_data(soup, req.config['list'], req.config['params'])
+                for data in datas:
+                    # print(data)
+                    dr = PageDetailRequest(data, req.config['detail'])
+                    time.sleep(REQUEST_SPAN)
+                    yield dr.request()
 
-            self.logger.warning('url:', response.url)
-            if DEBUG: return        # do not go on next page crawling
+                self.logger.warning('url: ' + response.url)
+                if DEBUG: return        # do not go on next page crawling
 
             time.sleep(REQUEST_SPAN)
-            request.page_next()
-            yield request.request()
+            req.page_next()
+            yield req.request()
     
     def isomorphic_extract_data(self, soup, config, params=None):
         '''
@@ -89,6 +112,9 @@ class BaseSpider(scrapy.Spider):
             data = {}
             for k, v in c.items():
                 if k[0] == '_': continue
+                if not v:
+                    data[k] = ''
+                    continue
                 if isinstance(v, str):
                     value = get_tag(t, v)
                     data[k] = self.post_process(k, value, params)
@@ -108,8 +134,47 @@ class BaseSpider(scrapy.Spider):
             return _extract_one(t, c)
         return _extract_recur(soup, config)
 
-    def package(self, list_data, dtl_data):
-        pass
+    def package(self, ld, dd):
+        ip = InvestProject()
+        ip['ip_code'] = dd.get('code', ld.get('code'))
+        ip['ip_name'] = dd.get('name', ld.get('name'))
+        ip['ip_construction'] = dd.get('frdw', '')
+        ip['ip_projtype'] = dd.get('xmlb', '')
+        ip['ip_province'] = self.province
+        ip['ip_city'] = self.city
+        ip['ip_status'] = ld.get('spjg', '')
+        ip['ip_date'] = ld.get('sprq')
+        ip['ip_createuser'] = 'sjj'
+        ip['ip_createtime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        ip['ip_url'] = ld.get('url_', '')
+        ip['ip_updatetime'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        ip['ip_oragan'] = ld.get('spbm', '')
+
+        ias = []
+        for xx in dd.get('gsxx', [])+dd.get('bljg', []):
+            ia = InvestApprove()
+            ia['ip_code'] = ip['ip_code']
+            ia['ia_dept'] = xx.get('spbm', ip['ip_oragan'])
+            ia['ia_item'] = xx.get('spsx')
+            ia['ia_status'] = xx.get('spjg', ip['ip_status'])
+            ia['ia_date'] = xx.get('sprq', ip['ip_date'])
+            ia['ia_permissionnum'] = xx.get('spwh', '')
+            ia['ia_code'] = md5_16(ia['ip_code']+(ia['ia_dept'] or '') + \
+                (ia['ia_item'] or '') + (ia['ia_status'] or '') + (ia['ia_date'] or '')\
+                    + (ia['ia_permissionnum'] or '') + '')
+            ias.append(ia)
+        
+        if not self.city:
+            depart = ip['ip_oragan']
+            if not depart and ias:
+                depart = ias[0]['ia_dept']
+            ip['ip_city'] = area.guess_city(depart, self.province_zh)
+            if not ip['ip_city']:
+                ip['ip_city'] = area.guess_city(ip['ip_construction'], self.province_zh)
+            if not ip['ip_city']:
+                ip['ip_city'] = area.guess_city(ip['ip_name'], self.province_zh) or ''
+
+        return ip, *ias
 
     def dump_page(self, text):
         '''
@@ -125,7 +190,7 @@ class BaseSpider(scrapy.Spider):
         pass
 
     def post_process(self, k, v, config):
-        if k == 'url_':
+        if k == 'url_' and v:
             if v[:4] != 'http':
                 v = self.build_detail_url(v, config)
         # if k.endswith('rq'):
@@ -152,7 +217,10 @@ class PageListRequest:
                 if 'page_key' in self.config else 'page'
             self.page_ = self.config['params'][self.page_key]
 
-        self.headers = {}
+        self.headers = self.config.get('headers', {})
+        if self.config.get('yzm_enabled', 0) == 0:
+            self.config['yzm_url'] = ''
+        self.counter = 0 if self.config.get('yzm_url') else 1
 
     @property
     def url(self):
@@ -163,12 +231,20 @@ class PageListRequest:
         return self.page_
 
     def page_next(self):
-        self.page_ += 1
+        self.counter += 1
+        if self.counter != 1:
+            self.page_ += 1
+        
+    def set_captcha(self, captcha):
+        self.config['params']['qryYZM'] = captcha
+
+    def reset_captcha(self):
+        self.config['params']['qryYZM'] = ''
 
     def request(self, **kwargs):
         args = {'wait': 5, 'timeout': 60, 'images': 0, 'resource_timeout': 20}
         url = self.url
-        if 'params' in self.config:
+        if 'params' in self.config and self.counter > 0:
             self.config['params'][self.page_key] = self.page
             params = []
             for k, v in self.config['params'].items():

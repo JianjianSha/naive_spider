@@ -11,9 +11,10 @@ def key_info(self):
             v = self[c] if c in self._values else '<None>'
             es.append(f"{c}={v}")
     for c in self._values:
-        if 'name' in c.lower():
+        if 'name' in c.lower() or 'province' in c.lower():
             es.append(f"{c}={self[c]}")
             break
+
     es.append('...')
     return "[%s]" % (', '.join(es))
 

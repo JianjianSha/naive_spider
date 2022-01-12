@@ -6,6 +6,13 @@ import re
 
 
 def roma_py(area):
+    '''
+    @parameters:
+    area: zh
+
+    @return:
+        pinyin
+    '''
     py = ''.join(l[0] for l in pinyin(area, style=Style.TONE2))
     py = tone2roma(py)
     return py
@@ -158,6 +165,7 @@ area = Area()
 def test():
     text = '青县科技工信和商务局'
     at = Area()
-    print('input:', text)
-    print('analyzed city:', at.guess_city(text, 'hebei'))
+    # print('input:', text)
+    # print('analyzed city:', at.guess_city(text, 'hebei'))
+    at.py2name('shahnghaai')
     

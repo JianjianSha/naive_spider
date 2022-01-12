@@ -2,6 +2,7 @@ from colorama import init, Fore, Back, Style
 import random
 import re
 import hashlib
+from urllib import parse as urlparse
 
 
 COLORS = ['cyan', 'yellow', 'blue', 'magenta', 'green', 'red',
@@ -79,3 +80,14 @@ def md5_16(text):
     
 def md5(text):
     return hashlib.md5(bytes(text, encoding='utf8')).hexdigest()
+
+
+def urlencode(txt, encoding):
+    '''
+    txt: str, to be url-encoded
+    encoding: str, encoding pattern, e.g., 'utf-8', 'GBK'
+    '''
+    return urlparse.quote(txt, encoding=encoding)
+
+def urldecode(txt, encoding):
+    return urlparse.unquote(txt, encoding=encoding)
