@@ -174,7 +174,8 @@ class BaseSpider(scrapy.Spider):
             if not ip['ip_city']:
                 ip['ip_city'] = area.guess_city(ip['ip_name'], self.province_zh) or ''
 
-        return ip, *ias
+        res = [ip] + ias
+        return res
 
     def dump_page(self, text):
         '''

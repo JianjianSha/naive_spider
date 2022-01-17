@@ -1,13 +1,13 @@
 InvestProject:
   server: mssql
-  host: 192.168.2.202
-  db: InvestProjData
-  user: qzppbdata
-  pass: qzdata159@Qz
+  host: 192.168.1.1
+  db: InvestProjectTable
+  user: xxx
+  pass: xxx
 
 InvestApprove:
   server: mssql
-  host: 192.168.2.202
-  db: InvestProjData
-  user: qzppbdata
-  pass: qzdata159@Qz
+  host: 192.168.1.1
+  db: InvestApproveTable
+  user: xxx
+  pass: xxx

@@ -7,29 +7,36 @@ class ShanghaiCaptcha(scrapy.Spider):
         'ITEM_PIPELINES': {}
     }
     def __init__(self, **kwargs):
-        self.count = 2240
-        self.url = 'http://222.66.64.156:8082/xxgs/CheckCodeImg2.jsp?d=%d'
+        self.count = 0
+        # self.url = 'http://222.66.64.156:8082/xxgs/CheckCodeImg2.jsp?d=%d'  # shanghai
+
+        # fujian
         self.url = 'http://61.154.11.191/creditpub/captcha?preset=&ra=0.07100937359923254'
     
 
     def _request(self):
-        milisecond = int(round(time.time()*1000))
-        url = self.url % milisecond
-        return scrapy.Request(url)
+        url = self.url
+        if '%d' in self.url:
+            milisecond = int(round(time.time()*1000))
+            url = self.url % milisecond
+        return scrapy.Request(url, dont_filter=True)
 
     def start_requests(self):
         yield self._request()
 
     def parse(self, response):
         img = response.body
-        filename = response.url.split('=')[1]
-        
-        with open('naive_spider/images/%s.jpg' % filename, 'wb') as f:
+        self.count += 1
+        if '%d' in self.url:
+            filename = response.url.split('=')[1]
+        else:
+            filename = str(self.count)
+        with open('naive_spider/images/fujian/%s.jpg' % filename, 'wb') as f:
             f.write(img)
-            self.count += 1
+            
             print('=> %d, filename: %s' % (self.count, filename))
-        if self.count < 5000:
-            time.sleep(1)
+        if self.count < 10:
+            time.sleep(0.2)
             yield self._request()
 
 

@@ -55,7 +55,7 @@ class Area:
         name2code = {}
         code2name = {}
         self.py2name_ = {}
-        with open(file, 'r') as f:
+        with open(file, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 if line.strip():
                     code, name = line.strip().split(' ')
