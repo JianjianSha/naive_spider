@@ -1,8 +1,11 @@
+from naive_spider.items.fenshaolu import FenShaoLuItem
 from .imports import *
-
+import json
+import time
 
 class ShanghaiCaptcha(scrapy.Spider):
     name = 'shanghaicaptcha'
+    # scrapy crawl shanghaicaptcha
     custom_settings = {
         'ITEM_PIPELINES': {}
     }
@@ -11,7 +14,10 @@ class ShanghaiCaptcha(scrapy.Spider):
         # self.url = 'http://222.66.64.156:8082/xxgs/CheckCodeImg2.jsp?d=%d'  # shanghai
 
         # fujian
-        self.url = 'http://61.154.11.191/creditpub/captcha?preset=&ra=0.07100937359923254'
+        # self.url = 'http://61.154.11.191/creditpub/captcha?preset=&ra=0.07100937359923254'
+        # self.task = 'fujian'
+        self.url = 'https://credit.ningbo.gov.cn/nbggxy/resources/jsp/image.jsp?tm=0.014761931814312623'
+        self.task = 'nbxy'
     
 
     def _request(self):
@@ -31,11 +37,11 @@ class ShanghaiCaptcha(scrapy.Spider):
             filename = response.url.split('=')[1]
         else:
             filename = str(self.count)
-        with open('naive_spider/images/fujian/%s.jpg' % filename, 'wb') as f:
+        with open('naive_spider/images/%s/%s.jpg' % (self.task, filename), 'wb') as f:
             f.write(img)
             
             print('=> %d, filename: %s' % (self.count, filename))
-        if self.count < 10:
+        if self.count < 512:
             time.sleep(0.2)
             yield self._request()
 
@@ -101,3 +107,41 @@ class Chengyu(scrapy.Spider):
             return self.start_requests()
 
 
+class FenShaoLu(scrapy.Spider):
+    name = 'fenshaolu'
+    custom_settings = {
+        'ITEM_PIPELINES': {
+            'naive_spider.pipelines.file_pl.ExcelPipeline': 300,
+        }
+    }
+
+    def __init__(self):
+        print('initialize...')
+        self.url = 'https://ljgk.envsc.cn/OutInterface/GetBurnList.ashx?pscode=%s&outputcode=&day=&SystemType=C16A882D480E678F&sgn=9038d4f536de5792ef481805c058a90a58817438&ts=1679630339213&tc=56076664'
+        # 'https://ljgk.envsc.cn/OutInterface/GetBurnList.ashx?pscode=%s&outputcode=3255E390BCC698220F251F2F5AB40F30&day=20230323&SystemType=C16A882D480E678F&sgn=241563365ad7b6e5a319820df70ee2c4b51751d1&ts=1679636044133&tc=85172472'
+        with open('naive_spider/data/fen_shao_lu.json') as f:
+            self.ls = json.load(f)
+        self.i = 198
+    
+    def start_requests(self):
+        l = self.ls[self.i]
+        yield scrapy.Request(self.url % l['ps_code'])
+
+    def parse(self, response):
+        details = json.loads(response.text)
+        l = self.ls[self.i]
+        print('=> processing %d:' % (self.i+1), l['ps_name'])
+        for d in details:
+            item = FenShaoLuItem()
+            item['com_name'] = l['ps_name']
+            item['com_address'] = l['address']
+            item['province'] = l['fullregion_name'].split('-')[0]
+            item['burn_ability'] = d['burn_ability']
+            item['boiler_type'] = d['boiler_type']
+            item['prod_date'] = d['creater_time']
+            yield item
+        
+        self.i += 1
+        time.sleep(20)
+        l = self.ls[self.i]
+        yield scrapy.Request(self.url % l['ps_code'])

@@ -3,4 +3,4 @@ __pycache__/
 *.log
 logs
 images
-*.temp
+*temp.yml

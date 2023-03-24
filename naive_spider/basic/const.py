@@ -1,5 +1,6 @@
 CONNECTOR = '-'
-DB_CONFIG = 'naive_spider/config/db.yml'
+# DB_CONFIG = 'naive_spider/config/db.yml'
+DB_CONFIG = 'naive_spider/config/db_temp.yml'
 DS_CONFIG = 'naive_spider/config/ds.json'
 
 DEBUG = False
